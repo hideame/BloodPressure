@@ -21,8 +21,7 @@ class EditActivity : AppCompatActivity() {
 
         val bpId = intent.getLongExtra("id",0L)
         if (bpId > 0L ) {
-            val bloodPress = realm.where<BloodPress>()
-                .equalTo("id", bpId).findFirst()
+            val bloodPress = realm.where<BloodPress>().equalTo("id", bpId).findFirst()
             maxEdit.setText(bloodPress?.max.toString())
             minEdit.setText(bloodPress?.min.toString())
             pulseEdit.setText(bloodPress?.pulse.toString())
@@ -74,7 +73,7 @@ class EditActivity : AppCompatActivity() {
         }
 
         deleteBtn.setOnClickListener {
-            relam.executeTransaction {
+            realm.executeTransaction {
                 val bloodPress = realm.where<BloodPress>()
                     .equalTo("id", bpId)
                     ?.findFirst()
