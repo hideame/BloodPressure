@@ -2,6 +2,7 @@ package com.example.bloodpressure
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import io.realm.Realm
 import io.realm.kotlin.createObject
@@ -18,6 +19,19 @@ class EditActivity : AppCompatActivity() {
         setContentView(R.layout.activity_edit)
         realm = Realm.getDefaultInstance()
 
+        val bpId = intent.getLongExtra("id",0L)
+        if (bpId > 0L ) {
+            val bloodPress = realm.where<BloodPress>()
+                .equalTo("id", bpId).findFirst()
+            maxEdit.setText(bloodPress?.max.toString())
+            minEdit.setText(bloodPress?.min.toString())
+            pulseEdit.setText(bloodPress?.pulse.toString())
+            deleteBtn.visibility = View.VISIBLE
+        } else {
+            // 削除ボタン非表示
+            deleteBtn.visibility = View.INVISIBLE
+        }
+
         saveBtn.setOnClickListener{
             var max: Long = 0
             var min: Long = 0
@@ -32,16 +46,41 @@ class EditActivity : AppCompatActivity() {
             if (!pulseEdit.text.isNullOrEmpty()) {
                 pulse = pulseEdit.text.toString().toLong()
             }
-            realm.executeTransaction {
-                val maxId = realm.where<BloodPress>().max("id")
-                val nextId = (maxId?.toLong() ?: 0L) + 1L
-                val bloodPress = realm.createObject<BloodPress>(nextId)
-                bloodPress.dateTime = Date()
-                bloodPress.max = max
-                bloodPress.min = min
-                bloodPress.pulse = pulse
+
+            when (bpId) {
+                0L -> {
+                    realm.executeTransaction {
+                        val maxId = realm.where<BloodPress>().max("id")
+                        val nextId = (maxId?.toLong() ?: 0L) + 1L
+                        val bloodPress = realm.createObject<BloodPress>(nextId)
+                        bloodPress.dateTime = Date()
+                        bloodPress.max = max
+                        bloodPress.min = min
+                        bloodPress.pulse = pulse
+                    }
+                }
+                // 修正処理
+                else -> {
+                    realm.executeTransaction {
+                        val bloodPress = realm.where<BloodPress>().equalTo("id", bpId).findFirst()
+                        bloodPress?.max = max
+                        bloodPress?.min = min
+                        bloodPress?.pulse = pulse
+                    }
+                }
             }
             Toast.makeText(applicationContext, "保存しました", Toast.LENGTH_SHORT).show()
+            finish()
+        }
+
+        deleteBtn.setOnClickListener {
+            relam.executeTransaction {
+                val bloodPress = realm.where<BloodPress>()
+                    .equalTo("id", bpId)
+                    ?.findFirst()
+                    ?.deleteFromRealm()
+            }
+            Toast.makeText(applicationContext, "削除しました", Toast.LENGTH_SHORT).show()
             finish()
         }
     }
